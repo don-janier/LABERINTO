@@ -1,5 +1,7 @@
 import pygame
 
+print('Hola')
+
 pygame.init()
 
 width = 1200
