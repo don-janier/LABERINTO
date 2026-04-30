@@ -1,6 +1,6 @@
 import pygame
 
-print('Hola')
+print('Hoa')
 
 pygame.init()
 
