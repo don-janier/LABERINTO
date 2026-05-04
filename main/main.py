@@ -1,6 +1,6 @@
 import pygame 
 
-print('Hoperra')
+print('Hozorra')
 
 pygame.init()
 
