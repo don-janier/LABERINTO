@@ -24,3 +24,4 @@ pygame.quit()
 # Tengo que crear el ambiente virtual D:
 # Recuerde crear un entorno virtual cuando clone la carpeta del repositorio.
 # Y después instala Pygame.
+#Tratata
