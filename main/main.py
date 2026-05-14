@@ -1,5 +1,6 @@
 import pygame 
 import constantes
+from pygame import font
 
 print('Hozorra')
 
