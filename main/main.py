@@ -1,14 +1,19 @@
 import pygame 
+import constantes
 
 print('Hozorra')
 
 pygame.init()
 
-width = 1200
-height = 700
-
-ventana = pygame.display.set_mode((width, height))
+ventana = pygame.display.set_mode((constantes.width, constantes.height))
 pygame.display.set_caption("LA BERINTONELA")
+
+#fuentes
+font_inicio = pygame.font.Font("inicio.ttf", 50)
+font_titulo = pygame.font.Font("titulo.ttf", 100)
+
+#botones
+boton_jugar = pygame.Rect(constantes.width//2 - 100, constantes.height//2 - 50, 200, 100)
 
 run = True
 while run:
