@@ -1,0 +1,180 @@
+import tkinter as tk
+from tkinter import font
+import pygame
+from PIL import Image, ImageTk
+
+# ----- 1. INICIALIZAMOS HERRAMIENTAS -----
+pygame.init()
+
+# ----- 2. VENTANA Y CONFIGURACIÓN -----
+ventana = tk.Tk()
+ventana.title("MI JUEGO - MOVIMIENTO ESTILO TOMB")
+ventana.geometry("800x600")
+ventana.resizable(False, False)
+ventana.configure(bg="#222222")
+
+# Fuente estilo cubitos
+fuente_cubos = font.Font(family="Courier New", size=28, weight="bold")
+
+# VARIABLES GLOBALES
+imagen_personaje_global = None
+pos_x = 0
+pos_y = 0
+velocidad = 12  # Más rápido, como en el juego
+lienzo = None
+
+# Variables NUEVAS para el movimiento automático
+direccion_actual = None  # Hacia dónde se está moviendo ahora
+se_mueve = False         # Si está deslizándose o parado
+
+# ----- FUNCIÓN PARA TEXTO CON SOMBRA -----
+def texto_con_sombra(contenedor, texto, x, y, color_texto="white", color_sombra="#111111", desplazamiento=2):
+    sombra = tk.Label(contenedor, text=texto, font=fuente_cubos, fg=color_sombra, bg=contenedor["bg"])
+    sombra.place(x=x + desplazamiento, y=y + desplazamiento)
+    texto_real = tk.Label(contenedor, text=texto, font=fuente_cubos, fg=color_texto, bg=contenedor["bg"])
+    texto_real.place(x=x, y=y)
+
+# ----- FUNCIÓN PARA CREAR EL PERSONAJE -----
+def crear_personaje():
+    tam = 60
+    superficie = pygame.Surface((tam, tam), pygame.SRCALPHA)
+
+    # 🟥 CUERPO / MÁSCARA
+    pygame.draw.rect(superficie, (200, 30, 0), (4, 4, 52, 52), border_radius=10)
+    pygame.draw.rect(superficie, (100, 10, 0), (4, 4, 52, 52), width=2, border_radius=10)
+    pygame.draw.rect(superficie, (255, 60, 30), (6, 6, 48, 15), border_radius=8)
+
+    # 👁️ OJOS
+    pygame.draw.ellipse(superficie, (255, 255, 255), (12, 18, 14, 20))
+    pygame.draw.ellipse(superficie, (0, 200, 255), (15, 22, 8, 12))
+    pygame.draw.ellipse(superficie, (0, 0, 0), (17, 26, 4, 6))
+
+    pygame.draw.ellipse(superficie, (255, 255, 255), (34, 18, 14, 20))
+    pygame.draw.ellipse(superficie, (0, 200, 255), (37, 22, 8, 12))
+    pygame.draw.ellipse(superficie, (0, 0, 0), (39, 26, 4, 6))
+
+    # 🟨 DETALLE
+    pygame.draw.polygon(superficie, (255, 200, 0), [(30, 35), (22, 48), (38, 48)])
+    pygame.draw.line(superficie, (150, 100, 0), (30, 35), (30, 45), 2)
+
+    # 🔄 CONVERSIÓN
+    datos_brutos = pygame.image.tostring(superficie, "RGBA")
+    imagen_pil = Image.frombytes("RGBA", superficie.get_size(), datos_brutos)
+    return ImageTk.PhotoImage(imagen_pil)
+
+# ----- FUNCIÓN PRINCIPAL DE MOVIMIENTO (LA CLAVE DEL ESTILO) -----
+def mover(evento):
+    global direccion_actual, se_mueve
+
+    # Cuando presionas una tecla, SOLO CAMBIAS LA DIRECCIÓN
+    # El personaje sigue deslizándose solo hasta el borde
+    if evento.keysym == "Up":
+        direccion_actual = "arriba"
+        se_mueve = True
+    elif evento.keysym == "Down":
+        direccion_actual = "abajo"
+        se_mueve = True
+    elif evento.keysym == "Left":
+        direccion_actual = "izquierda"
+        se_mueve = True
+    elif evento.keysym == "Right":
+        direccion_actual = "derecha"
+        se_mueve = True
+
+# ----- FUNCIÓN QUE ACTUALIZA LA POSICIÓN AUTOMÁTICAMENTE -----
+def actualizar_posicion():
+    global pos_x, pos_y, se_mueve
+
+    # Solo se mueve si hay una dirección activa
+    if se_mueve:
+        if direccion_actual == "arriba":
+            if pos_y > 0:
+                pos_y -= velocidad
+            else:
+                se_mueve = False  # Chocó con el borde -> DETENER
+        elif direccion_actual == "abajo":
+            if pos_y < 540:
+                pos_y += velocidad
+            else:
+                se_mueve = False # Chocó con el borde -> DETENER
+        elif direccion_actual == "izquierda":
+            if pos_x > 0:
+                pos_x -= velocidad
+            else:
+                se_mueve = False # Chocó con el borde -> DETENER
+        elif direccion_actual == "derecha":
+            if pos_x < 740:
+                pos_x += velocidad
+            else:
+                se_mueve = False # Chocó con el borde -> DETENER
+
+    # Redibujar todo
+    actualizar_pantalla()
+
+    # Repetir esta función cada 20 milisegundos (esto da la fluidez)
+    ventana.after(20, actualizar_posicion)
+
+# ----- FUNCIÓN PARA REDIBUJAR -----
+def actualizar_pantalla():
+    lienzo.delete("all")
+    # Dibujamos el personaje centrado en su coordenada
+    lienzo.create_image(pos_x + 30, pos_y + 30, image=imagen_personaje_global)
+
+# ----- PANTALLA DE JUEGO -----
+def pantalla_juego():
+    global imagen_personaje_global, pos_x, pos_y, lienzo, direccion_actual, se_mueve
+
+    # Borrar menú
+    for elemento in ventana.winfo_children():
+        elemento.destroy()
+
+    # --- CONTENIDO DEL JUEGO ---
+    ventana.configure(bg="#121212")
+
+    # Reiniciar posición y estado de movimiento
+    pos_x = 370
+    pos_y = 270
+    direccion_actual = None
+    se_mueve = False
+
+    # Crear imagen
+    imagen_personaje_global = crear_personaje()
+
+    # Crear lienzo (con highlightthickness=0 para quitar bordes)
+    lienzo = tk.Canvas(ventana, width=800, height=600, bg="#121212", highlightthickness=0)
+    lienzo.pack()
+
+    # Conectar teclas
+    ventana.bind("<Up>", mover)
+    ventana.bind("<Down>", mover)
+    ventana.bind("<Left>", mover)
+    ventana.bind("<Right>", mover)
+
+    # Iniciar el bucle de movimiento automático
+    actualizar_posicion()
+
+    # Texto
+    texto_con_sombra(ventana, "¡DESLIZAMIENTO ACTIVO!", 80, 50, color_texto="#FF4500", color_sombra="#8B0000")
+
+# ----- FUNCIÓN SALIR -----
+def cerrar_programa():
+    pygame.quit()
+    ventana.destroy()
+
+# ----- PANTALLA PRINCIPAL / MENÚ -----
+texto_con_sombra(ventana, "JUEGO DE CUBOS", 180, 70, "white", "black", 3)
+
+boton_play = tk.Button(
+    ventana, text="PLAY", font=fuente_cubos, command=pantalla_juego,
+    bg="#008800", fg="white", width=10, height=2, bd=5, relief="raised"
+)
+boton_play.pack(pady=200)
+
+boton_quit = tk.Button(
+    ventana, text="QUIT", font=fuente_cubos, command=cerrar_programa,
+    bg="#880000", fg="white", width=10, height=2, bd=5, relief="raised"
+)
+boton_quit.pack(pady=10)
+
+# EJECUTAR
+ventana.mainloop()
