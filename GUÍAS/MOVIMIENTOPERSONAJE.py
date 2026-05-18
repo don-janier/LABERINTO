@@ -30,7 +30,7 @@ jugadorY_C = 0
 
 def jugador(x, y):
 
-  ventana.blit(jugadorImg, (jugadorX, jugadorY)) # El método .blit permite dibujar lo que se haya cargado en el programa.
+  ventana.blit(jugadorImg, (x, y)) # El método .blit permite dibujar lo que se haya cargado en el programa.
 
 activo = True
 

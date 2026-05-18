@@ -3,21 +3,8 @@ import tkinter as tk
 import pygame
 from PIL import Image, ImageTk
 
-#inicializamos pygame solo para usar sus funciones, porque el juego se va a desarrollar con tkinter, 
-#pero se usaran algunas funciones de pygame para el desarrollo del juego.
-pygame.init()
-
-#creamos la ventana del juego con tkinter, le damos un titulo, un tamaño, un color de fondo y hacemos que no se pueda redimensionar.
-ventana = tk.Tk()
-ventana.title("La Berintonela")
-ventana.geometry("1000x600")
-ventana.configure(bg="#100221")
-ventana.resizable(False, False)
-
 #creamos una variable global para almacenar la imagen del personaje,
 #esta variable se va a usar en otras partes del programa para mostrar la imagen del personaje en la ventana.
-imagen_personaje_global = None
-
 def crear_personaje():
     tamaño_personaje = 50
     superficie_personaje = pygame.Surface((tamaño_personaje, tamaño_personaje), pygame.SRCALPHA)
@@ -66,6 +53,19 @@ def empezar_juego():
 #creamos una funcion para cerrar el programa, esta funcion se va a ejecutar cuando el usuario haga click en el boton de exit,
 def cerrar_programa():
     ventana.destroy()
+
+#inicializamos pygame solo para usar sus funciones, porque el juego se va a desarrollar con tkinter, 
+#pero se usaran algunas funciones de pygame para el desarrollo del juego.
+pygame.init()
+
+#creamos la ventana del juego con tkinter, le damos un titulo, un tamaño, un color de fondo y hacemos que no se pueda redimensionar.
+ventana = tk.Tk()
+ventana.title("La Berintonela")
+ventana.geometry("1000x600")
+ventana.configure(bg="#100221")
+ventana.resizable(False, False)
+
+imagen_personaje_global = None
 
 #creamos los elementos de la ventana, como etiquetas y botones, les damos un estilo y los colocamos en la ventana.
 etiqueta1 = tk.Label(ventana, text="LA BERINTONELA", font=("Fixedsys", 50, "bold"), fg="#6CEBEB", bg="#100221", height=-2, width=20   )
