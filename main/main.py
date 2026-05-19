@@ -2,6 +2,188 @@
 import tkinter as tk
 import pygame
 from PIL import Image, ImageTk
+import random
+
+ventanaW = 800
+ventanaH = 800
+tamañoCelda = 40
+separacionX = 100
+separacionY = 100
+
+# Variables para que calcule cuántas celdas caben en el rango dado (Dimension de la ventana menos 200px)
+# Nota: se declara su resultado como 'int' porque, de lo contrario, el resultado da '15.0', lo que Python reconoce como un 'float'
+numColumnas = int((ventanaW - 2 * separacionX) / tamañoCelda)
+numFilas = int((ventanaH - 2 * separacionY) / tamañoCelda)
+
+# Función que recoge el las dimensiones de la ventana y el tamaño de cada celda
+# para saber cuantas celdas caben en el rango dado de la ventana y poder añadir ese numero de celdas 
+# a las filas y columnas de una lista
+def lista_laberinto():
+  
+  cuadricula = []
+
+  # Iteración que crea las filas de la lista 'cuadricula':
+  for c in range(numFilas):
+    
+    fila = []
+
+    # Iteración que crea las filas de la columnas 'cuadricula':
+    for d in range(numColumnas):
+
+      celda = {
+        'visitada': False,
+        'paredes': {'n': True, 's': True, 'e': True, 'w': True}
+      }
+      fila.append(celda)
+  
+    cuadricula.append(fila)
+
+  return cuadricula
+
+# Función que rastrea las celdas vecinas disponibles:
+def buscar_vecinos(f, c, cuadricula):
+
+  vecinos = []
+
+  if ( f > 0 and not cuadricula[f - 1][c]['visitada'] ):
+       
+    vecinos.append(('n', f - 1, c))
+
+  if ( f < numFilas - 1 and not cuadricula[f + 1][c]['visitada'] ):
+       
+       vecinos.append(('s', f + 1, c))
+
+  if ( c > 0 and not cuadricula[f][c - 1]['visitada'] ):
+       
+       vecinos.append(('w', f, c - 1))
+
+  if ( c < numColumnas - 1 and not cuadricula[f][c + 1]['visitada'] ):
+        
+    vecinos.append(('e', f, c + 1))
+
+  return vecinos
+
+# Función que destruye las paredes de la cuadricula para generar los caminos del laberinto caminos:
+def crear_caminos(cuadricula):
+
+  # Se eligen una fila y columnas al azar desde la primera hasta la última:
+  filaInicio = random.randint(0, numFilas - 1)
+  colInicio = random.randint(0, numColumnas - 1)
+
+  # Se define la celda actual y se inicializa la pila:
+  actual = [filaInicio, colInicio]
+  pila = [actual]
+
+  # Bucle para conocer si el laberinto está terminado o no y que destruye las paredes de la cuadrícula:
+  while pila:
+
+    #  Se marca la celda inicial como visitada en la matriz:
+    cuadricula[filaInicio][colInicio]['visitada'] = True
+
+    actual = pila[-1]
+
+    # Se extraen 'f' y 'c' de la celda actual para que existan en el código:
+    f = actual[0]
+    c = actual[1]
+
+    # 'f' y 'c' se extraen de la celda actual: << f, c = actual[0], actual [1] >>:
+    vecinosDisponibles = buscar_vecinos(f, c, cuadricula)
+
+    if vecinosDisponibles:
+
+      # Se elige un vecino al azar y se desempaquetan sus tres datos:
+      direccion, fVecino, cVecino = random.choice(vecinosDisponibles)
+
+      # Se rompen las paredes ( asignando False a la actual y a la opuesta del vecino )
+      if direccion == 'n':
+
+        cuadricula[f][c]['paredes']['n'] = False
+        cuadricula[fVecino][cVecino]['paredes']['s'] = False
+
+      elif direccion == 's':
+
+        cuadricula[f][c]['paredes']['s'] = False
+        cuadricula[fVecino][cVecino]['paredes']['n'] = False
+
+      elif direccion == 'w':
+
+        cuadricula[f][c]['paredes']['w'] = False
+        cuadricula[fVecino][cVecino]['paredes']['e'] = False
+
+      elif direccion == 'e':
+
+        cuadricula[f][c]['paredes']['e'] = False
+        cuadricula[fVecino][cVecino]['paredes']['w'] = False
+
+      # Se marca la celda como visitada:
+      cuadricula[fVecino][cVecino]['visitada'] = True
+
+      # Se guarda la nueva celda en la pila:
+      actual = [fVecino, cVecino]
+      pila.append(actual)
+
+    else:
+
+      pila.pop()
+
+# Función que genera los caminos del laberinto.
+def generar_caminos():
+
+  laberinto = lista_laberinto()
+  crear_caminos(laberinto)
+
+  return laberinto
+
+# Función encargada de dibujar el laberinto en la ventana:
+def dibujar_laberinto(lienzo, cuadricula):
+
+  for f in range(len(cuadricula)):
+    
+    for c in range(len(cuadricula[f])):
+
+      # Se calcula la posición de cada celda en px.
+      x = 100 + (c * tamañoCelda)
+      y = 100 + (f * tamañoCelda)
+
+      paredes = cuadricula[f][c]['paredes']
+
+      # A partir de aquí, se mira en cada celda el subdiccionario de paredes (norte, sur, este y oeste) para dibujarlas mediante
+      # evaluaciones booleanas independientes para cada eje.
+      if ( paredes['n'] ):
+        
+        lienzo.create_line(
+          (x, y),
+          (x + tamañoCelda, y),
+          fill = 'white',
+          w = 2
+        )
+
+      if ( paredes['s'] ):
+        
+        lienzo.create_line(
+          (x, y + tamañoCelda),
+          (x + tamañoCelda, y + tamañoCelda),
+          fill = 'white',
+          w = 2
+        )
+
+      if ( paredes['e'] ):
+
+        lienzo.create_line(
+          (x + tamañoCelda, y),
+          (x + tamañoCelda, y + tamañoCelda),
+          fill = 'white',
+          w = 2
+        )
+
+      if ( paredes['w'] ):
+        
+        lienzo.create_line(
+          (x, y),
+          (x, y + tamañoCelda),
+          fill = 'white',
+          w = 2
+        )
 
 #creamos una variable global para almacenar la imagen del personaje,
 #esta variable se va a usar en otras partes del programa para mostrar la imagen del personaje en la ventana.
@@ -44,11 +226,31 @@ def empezar_juego():
     imagen_personaje_global = crear_personaje()
 
     #creamos un lienzo para dibujar el juego, le damos un tamaño y un color de fondo, y lo colocamos en la ventana.
-    lienzo = tk.Canvas(ventana, width=1000, height=600, bg="#100221", highlightthickness=0)
+    lienzo = tk.Canvas(
+       ventana,
+       w = ventanaW,
+       height = ventanaH,
+       bg = "#100221",
+       highlightthickness = 0
+    )
     lienzo.pack()
 
+    laberinto = generar_caminos()
+    entrada = (numFilas // 2, 0) # Fila y columnda para la entrada del laberinto.
+    salida = (numFilas // 2, numColumnas - 1) # Fila y columnda para la salida del laberinto.
+
+    # Se abren las paredes exteriores de la celda de entradan y salida:
+    laberinto[entrada[0]][entrada[1]]['paredes']['w'] = False
+    laberinto[salida[0]][salida[1]]['paredes']['e'] = False
+
+    dibujar_laberinto(lienzo, laberinto)
+
+    jugadorX = separacionX + entrada[1] * tamañoCelda + tamañoCelda // 2
+    jugadorY = separacionY + entrada[0] * tamañoCelda + tamañoCelda // 2
+
+
     #Dibujar personaje
-    lienzo.create_image(400, 300, image=imagen_personaje_global)
+    lienzo.create_image(jugadorX, jugadorY, image=imagen_personaje_global)
 
 #creamos una funcion para cerrar el programa, esta funcion se va a ejecutar cuando el usuario haga click en el boton de exit,
 def cerrar_programa():
@@ -61,7 +263,7 @@ pygame.init()
 #creamos la ventana del juego con tkinter, le damos un titulo, un tamaño, un color de fondo y hacemos que no se pueda redimensionar.
 ventana = tk.Tk()
 ventana.title("La Berintonela")
-ventana.geometry("1000x600")
+ventana.geometry(f"{ventanaW}x{ventanaH}")
 ventana.configure(bg="#100221")
 ventana.resizable(False, False)
 

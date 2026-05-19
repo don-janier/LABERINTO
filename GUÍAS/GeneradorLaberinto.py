@@ -1,13 +1,21 @@
 import pygame as pg
 import random
 
+ventanaW = 800
+ventanaH = 800
+tamañoCelda = 40
+separacionX = 100
+separacionY = 100
+
+# Variables para que calcule cuántas celdas caben en el rango dado (Dimension de la ventana menos 200px)
+# Nota: se declara su resultado como 'int' porque, de lo contrario, el resultado da '15.0', lo que Python reconoce como un 'float'
+numColumnas = int((ventanaW - 2 * separacionX) / tamañoCelda)
+numFilas = int((ventanaH - 2 * separacionY) / tamañoCelda)
 
 # Función que recoge el las dimensiones de la ventana y el tamaño de cada celda
 # para saber cuantas celdas caben en el rango dado de la ventana y poder añadir ese numero de celdas 
 # a las filas y columnas de una lista
-def listaLaberinto():
-  
-  global ventanaH, ventanaW, tamañoCelda, numColumnas, numFilas
+def lista_laberinto():
   
   cuadricula = []
 
@@ -30,9 +38,7 @@ def listaLaberinto():
   return cuadricula
 
 # Función encargada de dibujar el laberinto en la ventana:
-def dibujarLaberinto(cuadricula):
-
-  global tamañoCelda
+def dibujar_laberinto(cuadricula):
 
   for f in range(len(cuadricula)):
     
@@ -87,9 +93,7 @@ def dibujarLaberinto(cuadricula):
         )
 
 # Función que destruye las paredes de la cuadricula para generar los caminos del laberinto caminos:
-def generarLaberinto(cuadricula):
-
-  global numColumnas, numFilas
+def crear_caminos(cuadricula):
 
   # Se eligen una fila y columnas al azar desde la primera hasta la última:
   filaInicio = random.randint(0, numFilas - 1)
@@ -112,7 +116,7 @@ def generarLaberinto(cuadricula):
     c = actual[1]
 
     # 'f' y 'c' se extraen de la celda actual: << f, c = actual[0], actual [1] >>:
-    vecinosDisponibles = buscarVecinos(f, c, cuadricula)
+    vecinosDisponibles = buscar_vecinos(f, c, cuadricula)
 
     if vecinosDisponibles:
 
@@ -152,9 +156,7 @@ def generarLaberinto(cuadricula):
       pila.pop()
 
 # Función que rastrea las celdas vecinas disponibles:
-def buscarVecinos(f, c, cuadricula):
-
-  global numFilas, numColumnas
+def buscar_vecinos(f, c, cuadricula):
 
   vecinos = []
 
@@ -175,26 +177,26 @@ def buscarVecinos(f, c, cuadricula):
     vecinos.append(('e', f, c + 1))
 
   return vecinos
-    
+
+# Función que genera los caminos del laberinto.
+def generar_caminos():
+
+  laberinto = lista_laberinto()
+  crear_caminos(laberinto)
+
+  return laberinto
 
 pg.init()
 
-global ventanaH, ventanaW, tamañoCelda, numColumnas, numFilas
-
-ventanaW = 800
-ventanaH = 800
-tamañoCelda = 40
-
-# Variables para que calcule cuántas celdas caben en el rango dado (Dimension de la ventana menos 200px)
-# Nota: se declara su resultado como 'int' porque, de lo contrario, el resultado da '15.0', lo que Python reconoce como un 'float'
-numColumnas = int((ventanaW-200)/tamañoCelda)
-numFilas = int((ventanaH-200)/tamañoCelda)
-
 ventanaJuego = pg.display.set_mode((ventanaW, ventanaH))
 
-laberinto = listaLaberinto()
+laberinto = generar_caminos()
+entrada = (numFilas // 2, 0) # Fila y columnda para la entrada del laberinto.
+salida = (numFilas // 2, numColumnas - 1) # Fila y columnda para la salida del laberinto.
 
-generarLaberinto(laberinto)
+# Se abren las paredes exteriores de la celda de entradan y salida:
+laberinto[entrada[0]][entrada[1]]['paredes']['w'] = False
+laberinto[salida[0]][salida[1]]['paredes']['e'] = False
 
 activo = True
 
@@ -206,7 +208,7 @@ while activo:
 
   ventanaJuego.fill((0, 0, 0))
 
-  dibujarLaberinto(laberinto)
+  dibujar_laberinto(laberinto)
 
   for event in pg.event.get():
     
