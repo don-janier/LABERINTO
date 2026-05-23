@@ -1,14 +1,15 @@
 #importamos las librerias necesarias para el programa
 import tkinter as tk
-import pygame
+import pygame as pg
 from PIL import Image, ImageTk
 import random
 
 ventanaW = 800
 ventanaH = 800
-tamañoCelda = 40
+tamañoCelda = 20
 separacionX = 100
 separacionY = 100
+tamañoPersonaje = 15
 
 # Variables para que calcule cuántas celdas caben en el rango dado (Dimension de la ventana menos 200px)
 # Nota: se declara su resultado como 'int' porque, de lo contrario, el resultado da '15.0', lo que Python reconoce como un 'float'
@@ -187,32 +188,40 @@ def dibujar_laberinto(lienzo, cuadricula):
 
 #creamos una variable global para almacenar la imagen del personaje,
 #esta variable se va a usar en otras partes del programa para mostrar la imagen del personaje en la ventana.
-def crear_personaje():
-    tamaño_personaje = 50
-    superficie_personaje = pygame.Surface((tamaño_personaje, tamaño_personaje), pygame.SRCALPHA)
+# def crear_personaje():
+#     superficie_personaje = pg.Surface((tamañoPersonaje, tamañoPersonaje), pg.SRCALPHA)
 
-    # Cuerpo del personaje
-    pygame.draw.rect(superficie_personaje, (200, 30, 0), (4, 4, 52, 52), border_radius=10)
-    pygame.draw.rect(superficie_personaje, (100, 10, 0), (4, 4, 52, 52), width=2, border_radius=10)
-    pygame.draw.rect(superficie_personaje, (255, 60, 30), (6, 6, 48, 15), border_radius=8)
+#     # Cuerpo del personaje
+#     pg.draw.rect(superficie_personaje, (200, 30, 0), (4, 4, 52, 52), border_radius=10)
+#     pg.draw.rect(superficie_personaje, (100, 10, 0), (4, 4, 52, 52), width=2, border_radius=10)
+#     pg.draw.rect(superficie_personaje, (255, 60, 30), (6, 6, 48, 15), border_radius=8)
 
-    # Ojos del personaje
-    pygame.draw.ellipse(superficie_personaje, (255, 255, 255), (12, 18, 14, 20))
-    pygame.draw.ellipse(superficie_personaje, (0, 200, 255), (15, 22, 8, 12))
-    pygame.draw.ellipse(superficie_personaje, (0, 0, 0), (17, 26, 4, 6))
-    pygame.draw.ellipse(superficie_personaje, (255, 255, 255), (34, 18, 14, 20))
-    pygame.draw.ellipse(superficie_personaje, (0, 200, 255), (37, 22, 8, 12))
-    pygame.draw.ellipse(superficie_personaje, (0, 0, 0), (39, 26, 4, 6))
+#     # Ojos del personaje
+#     pg.draw.ellipse(superficie_personaje, (255, 255, 255), (12, 18, 14, 20))
+#     pg.draw.ellipse(superficie_personaje, (0, 200, 255), (15, 22, 8, 12))
+#     pg.draw.ellipse(superficie_personaje, (0, 0, 0), (17, 26, 4, 6))
+#     pg.draw.ellipse(superficie_personaje, (255, 255, 255), (34, 18, 14, 20))
+#     pg.draw.ellipse(superficie_personaje, (0, 200, 255), (37, 22, 8, 12))
+#     pg.draw.ellipse(superficie_personaje, (0, 0, 0), (39, 26, 4, 6))
 
-    # Detalles del personaje
-    pygame.draw.polygon(superficie_personaje, (255, 200, 0), [(30, 35), (22, 48), (38, 48)])
-    pygame.draw.line(superficie_personaje, (150, 100, 0), (30, 35), (30, 45), 2)
+#     # Detalles del personaje
+#     pg.draw.polygon(superficie_personaje, (255, 200, 0), [(30, 35), (22, 48), (38, 48)])
+#     pg.draw.line(superficie_personaje, (150, 100, 0), (30, 35), (30, 45), 2)
 
-    # Convertir la superficie de Pygame a una imagen de Tkinter
-    datos_brutos = pygame.image.tostring(superficie_personaje, "RGBA")
-    imagen_pil = Image.frombytes("RGBA", superficie_personaje.get_size(), datos_brutos)
-    return ImageTk.PhotoImage(imagen_pil)
+#     # Convertir la superficie de Pygame a una imagen de Tkinter
+#     datos_brutos = pg.image.tostring(superficie_personaje, "RGBA")
+#     imagen_pil = Image.frombytes("RGBA", superficie_personaje.get_size(), datos_brutos)
+#     return ImageTk.PhotoImage(imagen_pil)
 
+# 
+def personaje(lienzo, x1, y1, x2, y2):
+
+  lienzo.create_oval(
+      (x1, y1),
+      (x2, y2),
+      fill = 'red',
+      w = 0
+    )
 #creamos una funcion para empezar el juego, esta funcion se va a ejecutar cuando el usuario haga click en el boton de play, 
 #esta funcion va a eliminar todos los elementos de la ventana y va a cambiar el color de fondo de la ventana.
 def empezar_juego():
@@ -222,8 +231,6 @@ def empezar_juego():
     ventana.configure(bg="#100221")
 
     #esta variable global se va a usar para mostrar la imagen del personaje en la ventana, esta variable se va a actualizar con la imagen del personaje cada vez que se ejecute la funcion de empezar el juego.
-    global imagen_personaje_global
-    imagen_personaje_global = crear_personaje()
 
     #creamos un lienzo para dibujar el juego, le damos un tamaño y un color de fondo, y lo colocamos en la ventana.
     lienzo = tk.Canvas(
@@ -245,12 +252,55 @@ def empezar_juego():
 
     dibujar_laberinto(lienzo, laberinto)
 
-    jugadorX = separacionX + entrada[1] * tamañoCelda + tamañoCelda // 2
-    jugadorY = separacionY + entrada[0] * tamañoCelda + tamañoCelda // 2
+    fila_entrada, col_entrada = entrada
 
+    x1 = separacionX + col_entrada * tamañoCelda + (tamañoCelda - tamañoPersonaje) // 2
+    y1 = separacionY + fila_entrada * tamañoCelda + (tamañoCelda - tamañoPersonaje) // 2
+    x2 = x1 + tamañoPersonaje
+    y2 = y1 + tamañoPersonaje
+
+  # Era el movimiento de personaje que iba a implementar, pero no funciona bien con Tkinter D:
+
+    # keys = pg.key.get_pressed()
+
+    # jugadorX_C = 0
+    # jugadorY_C = 0
+
+    # if keys[pg.K_a]:
+
+    #   jugadorX_C = -0.2
+
+    # elif keys[pg.K_d]:
+
+    #   jugadorX_C = 0.2
+
+    # if keys[pg.K_w]:
+
+    #   jugadorY_C = -0.2
+
+    # elif keys[pg.K_s]:
+
+    #   jugadorY_C = 0.2
+
+    # # Calcular nueva posición
+    # nuevaX1 = jugadorX1 + jugadorX_C
+    # nuevaY1 = jugadorY1 + jugadorY_C
+
+    # nuevaX2 = jugadorX2 + jugadorX_C
+    # nuevaY2 = jugadorY2 + jugadorY_C
+
+    # # Verificar límites
+    # if nuevaX1 >= 0 and nuevaX1 <= ventanaH - tamañoPersonaje:
+    #   jugadorX1 = nuevaX1
+    # if nuevaY1 >= 0 and nuevaY1 <= ventanaW - tamañoPersonaje:
+    #   jugadorY1 = nuevaY1
+    # if nuevaX2 >= 0 and nuevaX2 <= ventanaH - tamañoPersonaje:
+    #   jugadorX2 = nuevaX2
+    # if nuevaY2 >= 0 and nuevaY2 <= ventanaW - tamañoPersonaje:
+    #   jugadorY2 = nuevaY2
 
     #Dibujar personaje
-    lienzo.create_image(jugadorX, jugadorY, image=imagen_personaje_global)
+    jugador = personaje(lienzo, x1, y1, x2, y2)
 
 #creamos una funcion para cerrar el programa, esta funcion se va a ejecutar cuando el usuario haga click en el boton de exit,
 def cerrar_programa():
@@ -258,7 +308,7 @@ def cerrar_programa():
 
 #inicializamos pygame solo para usar sus funciones, porque el juego se va a desarrollar con tkinter, 
 #pero se usaran algunas funciones de pygame para el desarrollo del juego.
-pygame.init()
+pg.init()
 
 #creamos la ventana del juego con tkinter, le damos un titulo, un tamaño, un color de fondo y hacemos que no se pueda redimensionar.
 ventana = tk.Tk()
@@ -271,7 +321,7 @@ imagen_personaje_global = None
 
 #creamos los elementos de la ventana, como etiquetas y botones, les damos un estilo y los colocamos en la ventana.
 etiqueta1 = tk.Label(ventana, text="LA BERINTONELA", font=("Fixedsys", 50, "bold"), fg="#6CEBEB", bg="#100221", height=-2, width=20   )
-etiqueta1.pack(pady=20)
+etiqueta1.pack(pady=40)
 
 boton_play = tk.Button(ventana, text="PLAY", font=("Fixedsys", 20, "bold"), command=empezar_juego, fg="#000000", width=10, height=2)
 boton_play.pack(pady=100)

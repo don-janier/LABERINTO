@@ -13,8 +13,6 @@ ventana = pg.display.set_mode((width, height))
 pg.display.set_caption('LABERINTO')
 
 # Para insertar una imágen como ícono:
-icon = pg.image.load('GUÍAS/maze.png')
-pg.display.set_icon(icon)
 
 # Jugador:
 jugadorImg = pg.image.load('0x72_DungeonTilesetII_v1.7/0x72_DungeonTilesetII_v1.7/frames/angel_idle_anim_f0.png')
@@ -80,4 +78,3 @@ while activo:
 
   jugador(jugadorX, jugadorY)
   pg.display.update() # Mantiene las variables del juego actualizadas.
-
