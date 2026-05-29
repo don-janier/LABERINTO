@@ -4,17 +4,22 @@ import pygame as pg
 from PIL import Image, ImageTk
 import random
 
-ventanaW = 800
-ventanaH = 800
-tamañoCelda = 20
-separacionX = 100
-separacionY = 100
-tamañoPersonaje = 15
+VENTANA_W = 800
+VENTANA_H = 800
+SEPARACION_X = 100
+SEPARACION_Y = 100
+TAMAÑO_CELDA = 40
+TAMAÑO_PERSONAJE = TAMAÑO_CELDA - 10
+
 
 # Variables para que calcule cuántas celdas caben en el rango dado (Dimension de la ventana menos 200px)
 # Nota: se declara su resultado como 'int' porque, de lo contrario, el resultado da '15.0', lo que Python reconoce como un 'float'
-numColumnas = int((ventanaW - 2 * separacionX) / tamañoCelda)
-numFilas = int((ventanaH - 2 * separacionY) / tamañoCelda)
+numColumnas = int((VENTANA_W - 2 * SEPARACION_X) / TAMAÑO_CELDA)
+numFilas = int((VENTANA_H - 2 * SEPARACION_Y) / TAMAÑO_CELDA)
+
+entrada = (numFilas // 2, 0) # Fila y columnda para la entrada del laberinto.
+salida = (numFilas // 2, numColumnas - 1) # Fila y columnda para la salida del laberinto.
+
 
 # Función que recoge el las dimensiones de la ventana y el tamaño de cada celda
 # para saber cuantas celdas caben en el rango dado de la ventana y poder añadir ese numero de celdas 
@@ -143,8 +148,8 @@ def dibujar_laberinto(lienzo, cuadricula):
     for c in range(len(cuadricula[f])):
 
       # Se calcula la posición de cada celda en px.
-      x = 100 + (c * tamañoCelda)
-      y = 100 + (f * tamañoCelda)
+      x = 100 + (c * TAMAÑO_CELDA)
+      y = 100 + (f * TAMAÑO_CELDA)
 
       paredes = cuadricula[f][c]['paredes']
 
@@ -154,7 +159,7 @@ def dibujar_laberinto(lienzo, cuadricula):
         
         lienzo.create_line(
           (x, y),
-          (x + tamañoCelda, y),
+          (x + TAMAÑO_CELDA, y),
           fill = 'white',
           w = 2
         )
@@ -162,8 +167,8 @@ def dibujar_laberinto(lienzo, cuadricula):
       if ( paredes['s'] ):
         
         lienzo.create_line(
-          (x, y + tamañoCelda),
-          (x + tamañoCelda, y + tamañoCelda),
+          (x, y + TAMAÑO_CELDA),
+          (x + TAMAÑO_CELDA, y + TAMAÑO_CELDA),
           fill = 'white',
           w = 2
         )
@@ -171,8 +176,8 @@ def dibujar_laberinto(lienzo, cuadricula):
       if ( paredes['e'] ):
 
         lienzo.create_line(
-          (x + tamañoCelda, y),
-          (x + tamañoCelda, y + tamañoCelda),
+          (x + TAMAÑO_CELDA, y),
+          (x + TAMAÑO_CELDA, y + TAMAÑO_CELDA),
           fill = 'white',
           w = 2
         )
@@ -181,126 +186,161 @@ def dibujar_laberinto(lienzo, cuadricula):
         
         lienzo.create_line(
           (x, y),
-          (x, y + tamañoCelda),
+          (x, y + TAMAÑO_CELDA),
           fill = 'white',
           w = 2
         )
 
-#creamos una variable global para almacenar la imagen del personaje,
-#esta variable se va a usar en otras partes del programa para mostrar la imagen del personaje en la ventana.
-# def crear_personaje():
-#     superficie_personaje = pg.Surface((tamañoPersonaje, tamañoPersonaje), pg.SRCALPHA)
+# Función para establecer el tiempo límite de cada ronda del laberinto:
+def temporizador(tiempo):
 
-#     # Cuerpo del personaje
-#     pg.draw.rect(superficie_personaje, (200, 30, 0), (4, 4, 52, 52), border_radius=10)
-#     pg.draw.rect(superficie_personaje, (100, 10, 0), (4, 4, 52, 52), width=2, border_radius=10)
-#     pg.draw.rect(superficie_personaje, (255, 60, 30), (6, 6, 48, 15), border_radius=8)
+  global tiempoRestante
 
-#     # Ojos del personaje
-#     pg.draw.ellipse(superficie_personaje, (255, 255, 255), (12, 18, 14, 20))
-#     pg.draw.ellipse(superficie_personaje, (0, 200, 255), (15, 22, 8, 12))
-#     pg.draw.ellipse(superficie_personaje, (0, 0, 0), (17, 26, 4, 6))
-#     pg.draw.ellipse(superficie_personaje, (255, 255, 255), (34, 18, 14, 20))
-#     pg.draw.ellipse(superficie_personaje, (0, 200, 255), (37, 22, 8, 12))
-#     pg.draw.ellipse(superficie_personaje, (0, 0, 0), (39, 26, 4, 6))
+  if tiempoRestante >= 0:
 
-#     # Detalles del personaje
-#     pg.draw.polygon(superficie_personaje, (255, 200, 0), [(30, 35), (22, 48), (38, 48)])
-#     pg.draw.line(superficie_personaje, (150, 100, 0), (30, 35), (30, 45), 2)
+    # Se calculan los minutos y segundos:
+    formato = f'{tiempoRestante:02d}'
+    tiempo.config(text = formato)
 
-#     # Convertir la superficie de Pygame a una imagen de Tkinter
-#     datos_brutos = pg.image.tostring(superficie_personaje, "RGBA")
-#     imagen_pil = Image.frombytes("RGBA", superficie_personaje.get_size(), datos_brutos)
-#     return ImageTk.PhotoImage(imagen_pil)
+    # Se resta un segundo:
+    tiempoRestante -= 1
 
-# 
+    # Se llama a esta función después de 1 segundo (en milisegundos):
+    tiempo.after(1000, temporizador, tiempo)
+
+  else:
+
+    ventana.unbind('<KeyPress>') # Swe bloquea el movimiento.
+
 def personaje(lienzo, x1, y1, x2, y2):
 
-  lienzo.create_oval(
+  return lienzo.create_oval(
       (x1, y1),
       (x2, y2),
       fill = 'red',
       w = 0
     )
+
+# Función para traducir la fila y la columna en coordenadas de pantalla (px):
+def calcular_coords(f, c):
+
+  x1 = SEPARACION_X + c * TAMAÑO_CELDA + (TAMAÑO_CELDA - TAMAÑO_PERSONAJE) // 2
+  y1 = SEPARACION_Y + f * TAMAÑO_CELDA + (TAMAÑO_CELDA - TAMAÑO_PERSONAJE) // 2
+
+  x2 = x1 + TAMAÑO_PERSONAJE
+  y2 = y1 + TAMAÑO_PERSONAJE
+
+  return x1, y1, x2, y2
+
 #creamos una funcion para empezar el juego, esta funcion se va a ejecutar cuando el usuario haga click en el boton de play, 
 #esta funcion va a eliminar todos los elementos de la ventana y va a cambiar el color de fondo de la ventana.
 def empezar_juego():
-    for elemento in ventana.winfo_children():
-        elemento.destroy()
+
+  global tiempoRestante
+  tiempoRestante = 10
+
+  puntaje = 0
+
+  for elemento in ventana.winfo_children():
+      
+      elemento.destroy()
+  
+  ventana.configure(bg = "#100221")
+
+  # Se crea un frame en la parte superior de la ventana para visualizar el tiempo:
+  frameTiempo = tk.Frame(
+    ventana,
+    bg = "#100221"
+  )
+
+  frameTiempo.pack(
+    side = 'top',
+    fill = 'x'
+  )
+  tiempo = tk.Label(
+    frameTiempo, 
+    font = ("Fixedsys", 50), 
+    fg = "#6CEBEB", 
+    bg = "#100221", 
+    height = -2, 
+    width = 20
+  )
+
+  tiempo.pack()
+  
+  frameJuego = tk.Frame(
+    ventana,
+    bg = "#100221"
+  )
+
+  frameJuego.pack(
+    side = 'bottom',
+    fill = 'both',
+    expand = True
+  )
+
+  #creamos un lienzo para dibujar el juego, le damos un tamaño y un color de fondo, y lo colocamos en la ventana.
+  lienzo = tk.Canvas(
+    frameJuego,
+    w = VENTANA_W,
+    height = VENTANA_H,
+    bg = "#100221",
+    highlightthickness = 0
+  )
+  lienzo.pack()
+
+  laberinto = generar_caminos()
+  
+  # Se abren las paredes exteriores de la celda de entradan y salida:
+  laberinto[entrada[0]][entrada[1]]['paredes']['w'] = False
+  laberinto[salida[0]][salida[1]]['paredes']['e'] = False
+
+  dibujar_laberinto(lienzo, laberinto)
+
+  # Se guarda la posición del jugador en un diccionario:
+  posicion = {
+    'f': entrada[0],
+    'c': entrada[1]
+  }
+
+  # Se dibuja al personaje y se guarda su ID:
+  x1, y1, x2, y2 = calcular_coords(posicion['f'], posicion['c'])
+  jugadorID = personaje(lienzo, x1, y1, x2, y2)
+
+  def mover_jugador(evento):
+
+    tecla = evento.char.lower()
+    f = posicion['f']
+    c = posicion['c']
     
-    ventana.configure(bg="#100221")
+    # Se evalúa W/A/S/D.
+    # Si la tecla es corecta y la pared en esa dirección está con 'False', el personaje se moverá.
+    if ( tecla == 'w' and not laberinto[f][c]['paredes']['n'] ):
 
-    #esta variable global se va a usar para mostrar la imagen del personaje en la ventana, esta variable se va a actualizar con la imagen del personaje cada vez que se ejecute la funcion de empezar el juego.
+      posicion['f'] -= 1
 
-    #creamos un lienzo para dibujar el juego, le damos un tamaño y un color de fondo, y lo colocamos en la ventana.
-    lienzo = tk.Canvas(
-       ventana,
-       w = ventanaW,
-       height = ventanaH,
-       bg = "#100221",
-       highlightthickness = 0
-    )
-    lienzo.pack()
+    if ( tecla == 's' and not laberinto[f][c]['paredes']['s'] ):
 
-    laberinto = generar_caminos()
-    entrada = (numFilas // 2, 0) # Fila y columnda para la entrada del laberinto.
-    salida = (numFilas // 2, numColumnas - 1) # Fila y columnda para la salida del laberinto.
+      posicion['f'] += 1
 
-    # Se abren las paredes exteriores de la celda de entradan y salida:
-    laberinto[entrada[0]][entrada[1]]['paredes']['w'] = False
-    laberinto[salida[0]][salida[1]]['paredes']['e'] = False
+    # NOTA: Se añade una validación para que el jugador no se salga de los límites por la puerta de inicio ni por la salida.
+    if ( tecla == 'a' and not laberinto[f][c]['paredes']['w'] and c > 0):
 
-    dibujar_laberinto(lienzo, laberinto)
+      posicion['c'] -= 1
 
-    fila_entrada, col_entrada = entrada
+    if ( tecla == 'd' and not laberinto[f][c]['paredes']['e'] and c < numColumnas - 1):
 
-    x1 = separacionX + col_entrada * tamañoCelda + (tamañoCelda - tamañoPersonaje) // 2
-    y1 = separacionY + fila_entrada * tamañoCelda + (tamañoCelda - tamañoPersonaje) // 2
-    x2 = x1 + tamañoPersonaje
-    y2 = y1 + tamañoPersonaje
+      posicion['c'] += 1
 
-  # Era el movimiento de personaje que iba a implementar, pero no funciona bien con Tkinter D:
+    # Se calculan las nuevas coordenadas y se le pide al lienzo que mueva el dibujo:
+    nx1, ny1, nx2, ny2 = calcular_coords(posicion['f'], posicion['c'])
+    lienzo.coords(jugadorID, nx1, ny1, nx2, ny2)
 
-    # keys = pg.key.get_pressed()
 
-    # jugadorX_C = 0
-    # jugadorY_C = 0
+  ventana.bind('<KeyPress>', mover_jugador)
 
-    # if keys[pg.K_a]:
-
-    #   jugadorX_C = -0.2
-
-    # elif keys[pg.K_d]:
-
-    #   jugadorX_C = 0.2
-
-    # if keys[pg.K_w]:
-
-    #   jugadorY_C = -0.2
-
-    # elif keys[pg.K_s]:
-
-    #   jugadorY_C = 0.2
-
-    # # Calcular nueva posición
-    # nuevaX1 = jugadorX1 + jugadorX_C
-    # nuevaY1 = jugadorY1 + jugadorY_C
-
-    # nuevaX2 = jugadorX2 + jugadorX_C
-    # nuevaY2 = jugadorY2 + jugadorY_C
-
-    # # Verificar límites
-    # if nuevaX1 >= 0 and nuevaX1 <= ventanaH - tamañoPersonaje:
-    #   jugadorX1 = nuevaX1
-    # if nuevaY1 >= 0 and nuevaY1 <= ventanaW - tamañoPersonaje:
-    #   jugadorY1 = nuevaY1
-    # if nuevaX2 >= 0 and nuevaX2 <= ventanaH - tamañoPersonaje:
-    #   jugadorX2 = nuevaX2
-    # if nuevaY2 >= 0 and nuevaY2 <= ventanaW - tamañoPersonaje:
-    #   jugadorY2 = nuevaY2
-
-    #Dibujar personaje
-    jugador = personaje(lienzo, x1, y1, x2, y2)
+  temporizador(tiempo)
+    
 
 #creamos una funcion para cerrar el programa, esta funcion se va a ejecutar cuando el usuario haga click en el boton de exit,
 def cerrar_programa():
@@ -313,7 +353,7 @@ pg.init()
 #creamos la ventana del juego con tkinter, le damos un titulo, un tamaño, un color de fondo y hacemos que no se pueda redimensionar.
 ventana = tk.Tk()
 ventana.title("La Berintonela")
-ventana.geometry(f"{ventanaW}x{ventanaH}")
+ventana.geometry(f"{VENTANA_W}x{VENTANA_H}")
 ventana.configure(bg="#100221")
 ventana.resizable(False, False)
 
