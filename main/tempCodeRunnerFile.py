@@ -193,25 +193,6 @@ def dibujar_laberinto(lienzo, cuadricula):
         )
 
 # Función para establecer el tiempo límite de cada ronda del laberinto:
-def temporizador(tiempo):
-
-  global tiempoRestante
-
-  if tiempoRestante >= 0:
-
-    # Se calculan los minutos y segundos:
-    formato = f'{tiempoRestante:02d}'
-    tiempo.config(text = formato)
-
-    # Se resta un segundo:
-    tiempoRestante -= 1
-
-    # Se llama a esta función después de 1 segundo (en milisegundos):
-    tiempo.after(1000, temporizador, tiempo)
-
-  else:
-
-    ventana.unbind('<KeyPress>') # Swe bloquea el movimiento.
 
 def personaje(lienzo, x1, y1, x2, y2):
 
@@ -238,9 +219,9 @@ def calcular_coords(f, c):
 def empezar_juego():
 
   global tiempoRestante
-  tiempoRestante = 10
+  tiempoRestante = 30
 
-  puntaje = 0
+  puntaje = [0]
 
   for elemento in ventana.winfo_children():
       
@@ -267,7 +248,23 @@ def empezar_juego():
     width = 20
   )
 
-  tiempo.pack()
+  tiempo.pack(
+    side = 'right',
+    padx = 10
+  )
+
+  etPuntuacion = tk.Label(
+    frameTiempo,
+    text = f"Puntuación: {puntaje[0]}",
+    font = ("Fixedsys", 20),
+    fg = "#6CEBEB",
+    bg = "#100221"
+  )
+
+  etPuntuacion.pack(
+    side = 'left', 
+    padx = 10
+  )
   
   frameJuego = tk.Frame(
     ventana,
@@ -290,56 +287,180 @@ def empezar_juego():
   )
   lienzo.pack()
 
-  laberinto = generar_caminos()
-  
-  # Se abren las paredes exteriores de la celda de entradan y salida:
-  laberinto[entrada[0]][entrada[1]]['paredes']['w'] = False
-  laberinto[salida[0]][salida[1]]['paredes']['e'] = False
-
-  dibujar_laberinto(lienzo, laberinto)
-
-  # Se guarda la posición del jugador en un diccionario:
-  posicion = {
-    'f': entrada[0],
-    'c': entrada[1]
+  estado_juego = {
+    'activo': True,
+    'temporizadorId': None
   }
 
-  # Se dibuja al personaje y se guarda su ID:
-  x1, y1, x2, y2 = calcular_coords(posicion['f'], posicion['c'])
-  jugadorID = personaje(lienzo, x1, y1, x2, y2)
+  def generar_nivel():
 
-  def mover_jugador(evento):
+    # Se limpia el canvas:
+    lienzo.delete('all')
 
-    tecla = evento.char.lower()
-    f = posicion['f']
-    c = posicion['c']
+    laberinto = generar_caminos()
+
+    # Se abren las paredes exteriores de la celda de entradan y salida:
+    laberinto[entrada[0]][entrada[1]]['paredes']['w'] = False
+    laberinto[salida[0]][salida[1]]['paredes']['e'] = False
+
+    dibujar_laberinto(lienzo, laberinto)
+
+    # Se guarda la posición del jugador en un diccionario:
+    posicion = {
+      'f': entrada[0],
+      'c': entrada[1]
+    }
+
+    # Se dibuja al personaje y se guarda su ID:
+    x1, y1, x2, y2 = calcular_coords(posicion['f'], posicion['c'])
+    jugadorID = personaje(lienzo, x1, y1, x2, y2)
+
+    def mover_jugador(evento):
+
+      tecla = evento.char.lower()
+      f = posicion['f']
+      c = posicion['c']
+      
+      # Se evalúa W/A/S/D.
+      # Si la tecla es corecta y la pared en esa dirección está con 'False', el personaje se moverá.
+      if ( tecla == 'w' and not laberinto[f][c]['paredes']['n'] ):
+
+        posicion['f'] -= 1
+
+      if ( tecla == 's' and not laberinto[f][c]['paredes']['s'] ):
+
+        posicion['f'] += 1
+
+      # NOTA: Se añade una validación para que el jugador no se salga de los límites por la puerta de inicio ni por la salida.
+      if ( tecla == 'a' and not laberinto[f][c]['paredes']['w'] and c > 0):
+
+        posicion['c'] -= 1
+
+      if ( tecla == 'd' and not laberinto[f][c]['paredes']['e'] and c < numColumnas - 1):
+
+        posicion['c'] += 1
+
+      # Se calculan las nuevas coordenadas y se le pide al lienzo que mueva el dibujo:
+      nx1, ny1, nx2, ny2 = calcular_coords(posicion['f'], posicion['c'])
+      lienzo.coords(jugadorID, nx1, ny1, nx2, ny2)
+
+      # Se verifica si llegó a la salida
+      if posicion['f'] == salida[0] and posicion['c'] == salida[1] and estado_juego['activo']:
+        victoria(puntaje, etPuntuacion)
+
+    ventana.bind('<KeyPress>', mover_jugador)
+
+  def victoria(puntaje, etiqueta):
+
+    estado_juego['activo'] = False
+    ventana.unbind('<KeyPress>')
+
+    # Para cancelar el temporizador:
+    if estado_juego['temporizadorId']:
+
+      ventana.after_cancel(estado_juego['temporizadorId'])
+
+    # Se suma la puntuación basada en el tiempo restante:
+    puntaje[0] += tiempoRestante * 5
+    etiqueta.config(text = f'Puntuación: {puntaje[0]}')
+
+    # Se genera un nuevo nivel después de 3 segundos:
+    ventana.after(3000, lambda: generar_nuevo_nivel())
+
+  def generar_nuevo_nivel():
+
+    global tiempoRestante
+    tiempoRestante = 60
+
+    estado_juego['activo'] = True
+    generar_nivel()
+    temporizador(tiempo)
+
+  def game_over():
     
-    # Se evalúa W/A/S/D.
-    # Si la tecla es corecta y la pared en esa dirección está con 'False', el personaje se moverá.
-    if ( tecla == 'w' and not laberinto[f][c]['paredes']['n'] ):
+    estado_juego['activo'] = False
+    ventana.unbind('<KeyPress>')
 
-      posicion['f'] -= 1
+    # Se destruye l frame del juego:
+    frameJuego.destroy()
 
-    if ( tecla == 's' and not laberinto[f][c]['paredes']['s'] ):
+    # Se crea un frame para los botones:
 
-      posicion['f'] += 1
+    frameBotones = tk.Frame(
+      ventana,
+      bg = '#100221'
+    )
+    frameBotones.pack(
+      side = 'bottom', 
+      pady = 20
+    )
 
-    # NOTA: Se añade una validación para que el jugador no se salga de los límites por la puerta de inicio ni por la salida.
-    if ( tecla == 'a' and not laberinto[f][c]['paredes']['w'] and c > 0):
+    etGameOver = tk.Label(
+      frameBotones,
+      text = '¡Tu tiempo ha terminado!',
+      font=("Fixedsys", 30, "bold"),
+      fg="#FF6B6B",
+      bg="#100221"
+    )
 
-      posicion['c'] -= 1
+    etGameOver.pack(pady = 10)
 
-    if ( tecla == 'd' and not laberinto[f][c]['paredes']['e'] and c < numColumnas - 1):
+    botonReiniciar = tk.Button(
+      frameBotones,
+      text="REINICIAR",
+      font=("Fixedsys", 16, "bold"),
+      command=empezar_juego,
+      fg="#000000",
+      bg="#6CEBEB",
+      width=15,
+      height=2
+    )
+    
+    botonReiniciar.pack(
+      side = 'left',
+      padx = 10,
+      pady = 10
+    )
 
-      posicion['c'] += 1
+    botonSalir = tk.Button(
+      frameBotones,
+      text = "SALIR",
+      font = ("Fixedsys", 16, "bold"),
+      command = cerrar_programa,
+      fg = "#000000",
+      bg = "#FF6B6B",
+      width = 15,
+      height = 2
+    )
 
-    # Se calculan las nuevas coordenadas y se le pide al lienzo que mueva el dibujo:
-    nx1, ny1, nx2, ny2 = calcular_coords(posicion['f'], posicion['c'])
-    lienzo.coords(jugadorID, nx1, ny1, nx2, ny2)
+    botonSalir.pack(
+      side = 'left',
+      padx = 10,
+      pady = 10
+    )
 
 
-  ventana.bind('<KeyPress>', mover_jugador)
+  def temporizador(tiempo):
 
+    global tiempoRestante
+
+    if tiempoRestante >= 0 and estado_juego['activo']:
+
+      formato = f'{tiempoRestante:02d}'
+      tiempo.config(text = formato)
+
+      # Se resta un segundo:
+      tiempoRestante -= 1
+
+      # Se llama a esta función después de 1 segundo (en milisegundos):
+      estado_juego['temporizadorId'] = tiempo.after(1000, temporizador, tiempo)
+
+    elif tiempoRestante <= 0 and estado_juego['activo']:
+
+      tiempo.config(text = '00')
+      game_over()
+
+  generar_nivel()
   temporizador(tiempo)
     
 
