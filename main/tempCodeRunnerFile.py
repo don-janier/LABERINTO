@@ -219,7 +219,7 @@ def calcular_coords(f, c):
 def empezar_juego():
 
   global tiempoRestante
-  tiempoRestante = 30
+  tiempoRestante = 60
 
   puntaje = [0]
 
@@ -316,6 +316,10 @@ def empezar_juego():
     jugadorID = personaje(lienzo, x1, y1, x2, y2)
 
     def mover_jugador(evento):
+
+      if not estado_juego['activo']:
+
+        return
 
       tecla = evento.char.lower()
       f = posicion['f']
