@@ -1,8 +1,5 @@
 #importamos las librerias necesarias para el programa
 import tkinter as tk
-import pygame as pg
-import time
-from PIL import Image, ImageTk
 import random
 
 VENTANA_W = 800
@@ -19,7 +16,7 @@ numColumnas = int((VENTANA_W - 2 * SEPARACION_X) / TAMAÑO_CELDA)
 numFilas = int((VENTANA_H - 2 * SEPARACION_Y) / TAMAÑO_CELDA)
 
 entrada = (numFilas // 2, 0) # Fila y columnda para la entrada del laberinto.
-salida = (numFilas // 2, numColumnas - 1) # Fila y columnda para la salida del laberinto.
+salida = (numFilas // 2, numColumnas - 1) # Fila y columna para la salida del laberinto.
 
 
 # Función que recoge el las dimensiones de la ventana y el tamaño de cada celda
@@ -84,9 +81,10 @@ def crear_caminos(cuadricula):
   # Bucle para conocer si el laberinto está terminado o no y que destruye las paredes de la cuadrícula:
   while pila:
 
-    #  Se marca la celda inicial como visitada en la matriz:
+    #  Se marca la celda inicial como visitada en la matriz:x
     cuadricula[filaInicio][colInicio]['visitada'] = True
-
+    
+    # Se pide el último elemento de la fila 'pila' y lo guarda en 'actual'.
     actual = pila[-1]
 
     # Se extraen 'f' y 'c' de la celda actual para que existan en el código:
@@ -96,6 +94,7 @@ def crear_caminos(cuadricula):
     # 'f' y 'c' se extraen de la celda actual: << f, c = actual[0], actual [1] >>:
     vecinosDisponibles = buscar_vecinos(f, c, cuadricula)
 
+    # ¿La lista tiene elementos dentro?
     if vecinosDisponibles:
 
       # Se elige un vecino al azar y se desempaquetan sus tres datos:
@@ -137,6 +136,8 @@ def crear_caminos(cuadricula):
 def generar_caminos():
 
   laberinto = lista_laberinto()
+
+  # Se llama a la funcion crear caminos para destruir las paredes del laberinto.
   crear_caminos(laberinto)
 
   return laberinto
@@ -287,7 +288,7 @@ def empezar_juego():
   )
   lienzo.pack()
 
-  estado_juego = {
+  estadoJuego = {
     'activo': True,
     'temporizadorId': None
   }
@@ -315,9 +316,9 @@ def empezar_juego():
     x1, y1, x2, y2 = calcular_coords(posicion['f'], posicion['c'])
     jugadorID = personaje(lienzo, x1, y1, x2, y2)
 
-    def mover_jugador(evento):
+    def mover_personaje(evento):
 
-      if not estado_juego['activo']:
+      if not estadoJuego['activo']:
 
         return
 
@@ -349,20 +350,22 @@ def empezar_juego():
       lienzo.coords(jugadorID, nx1, ny1, nx2, ny2)
 
       # Se verifica si llegó a la salida
-      if posicion['f'] == salida[0] and posicion['c'] == salida[1] and estado_juego['activo']:
+      if ( posicion['f'] == salida[0] and posicion['c'] == salida[1] and estadoJuego['activo'] ):
+
         victoria(puntaje, etPuntuacion)
 
-    ventana.bind('<KeyPress>', mover_jugador)
+    ventana.bind('<KeyPress>', mover_personaje)
 
   def victoria(puntaje, etiqueta):
 
-    estado_juego['activo'] = False
+    estadoJuego['activo'] = False
     ventana.unbind('<KeyPress>')
 
     # Para cancelar el temporizador:
-    if estado_juego['temporizadorId']:
+    if estadoJuego['temporizadorId']:
 
-      ventana.after_cancel(estado_juego['temporizadorId'])
+      # Para detener el temporizador:
+      ventana.after_cancel(estadoJuego['temporizadorId'])
 
     # Se suma la puntuación basada en el tiempo restante:
     puntaje[0] += tiempoRestante * 5
@@ -376,13 +379,13 @@ def empezar_juego():
     global tiempoRestante
     tiempoRestante = 60
 
-    estado_juego['activo'] = True
+    estadoJuego['activo'] = True
     generar_nivel()
     temporizador(tiempo)
 
   def game_over():
     
-    estado_juego['activo'] = False
+    estadoJuego['activo'] = False
     ventana.unbind('<KeyPress>')
 
     # Se destruye l frame del juego:
@@ -443,12 +446,11 @@ def empezar_juego():
       pady = 10
     )
 
-
   def temporizador(tiempo):
 
     global tiempoRestante
 
-    if tiempoRestante >= 0 and estado_juego['activo']:
+    if tiempoRestante >= 0 and estadoJuego['activo']:
 
       formato = f'{tiempoRestante:02d}'
       tiempo.config(text = formato)
@@ -457,9 +459,9 @@ def empezar_juego():
       tiempoRestante -= 1
 
       # Se llama a esta función después de 1 segundo (en milisegundos):
-      estado_juego['temporizadorId'] = tiempo.after(1000, temporizador, tiempo)
+      estadoJuego['temporizadorId'] = tiempo.after(1000, temporizador, tiempo)
 
-    elif tiempoRestante <= 0 and estado_juego['activo']:
+    elif tiempoRestante <= 0 and estadoJuego['activo']:
 
       tiempo.config(text = '00')
       game_over()
@@ -474,7 +476,6 @@ def cerrar_programa():
 
 #inicializamos pygame solo para usar sus funciones, porque el juego se va a desarrollar con tkinter, 
 #pero se usaran algunas funciones de pygame para el desarrollo del juego.
-pg.init()
 
 #creamos la ventana del juego con tkinter, le damos un titulo, un tamaño, un color de fondo y hacemos que no se pueda redimensionar.
 ventana = tk.Tk()
@@ -483,16 +484,14 @@ ventana.geometry(f"{VENTANA_W}x{VENTANA_H}")
 ventana.configure(bg="#100221")
 ventana.resizable(False, False)
 
-imagen_personaje_global = None
-
 #creamos los elementos de la ventana, como etiquetas y botones, les damos un estilo y los colocamos en la ventana.
 etiqueta1 = tk.Label(ventana, text="LA BERINTONELA", font=("Fixedsys", 50, "bold"), fg="#6CEBEB", bg="#100221", height=-2, width=20   )
 etiqueta1.pack(pady=40)
 
-boton_play = tk.Button(ventana, text="PLAY", font=("Fixedsys", 20, "bold"), command=empezar_juego, fg="#000000", width=10, height=2)
+boton_play = tk.Button(ventana, text="JUGAR", font=("Fixedsys", 20, "bold"), command=empezar_juego, fg="#000000", width=10, height=2)
 boton_play.pack(pady=100)
 
-boton_exit = tk.Button(ventana, text="EXIT", font=("Fixedsys", 20, "bold"), command=cerrar_programa, fg="#000000", width=10, height=2)
+boton_exit = tk.Button(ventana, text="SALIR", font=("Fixedsys", 20, "bold"), command=cerrar_programa, fg="#000000", width=10, height=2)
 boton_exit.pack(pady=10)
 
 #iniciamos el bucle principal de la ventana, servira para mantener la ventana abierta.
